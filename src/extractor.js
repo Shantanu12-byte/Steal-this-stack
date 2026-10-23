@@ -766,13 +766,14 @@ export async function interactivePickElement(url, outputDir) {
     str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   // 3. Write Studio Wrapper with Viewport Controls & Prompt Hub
+  // 3. Write Studio Wrapper with Viewport Controls & Prompt Hub
   const studioFilePath = path.join(outputDir, 'picked-component.html');
   const studioHtml = [
     '<!DOCTYPE html>',
     '<html lang="en">',
     '<head>',
     '  <meta charset="UTF-8" />',
-    `  <title>StealThisStack v5.7 Studio — ${pickedData.tagName}</title>`,
+    `  <title>StealThisStack Studio — ${pickedData.tagName}</title>`,
     '  <style>',
     '    * { box-sizing: border-box; }',
     '    body { margin: 0; height: 100vh; display: flex; flex-direction: column; background: #090D16; color: #F8FAFC; font-family: system-ui, sans-serif; overflow: hidden; }',
@@ -782,18 +783,13 @@ export async function interactivePickElement(url, outputDir) {
     '    .viewport-controls { display: flex; gap: 6px; align-items: center; }',
     '    .viewport-controls button, .viewport-controls a { background: #1E293B; color: #E2E8F0; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; text-decoration: none; }',
     '    .viewport-controls button:hover, .viewport-controls a:hover { border-color: #A855F7; color: white; }',
-    '    main { flex: 1; display: flex; justify-content: center; align-items: stretch; padding: 12px 12px 100px 12px; overflow: hidden; }',
+    '    main { flex: 1; display: flex; justify-content: center; align-items: stretch; padding: 12px; overflow: hidden; }',
     '    #stage-frame { width: 100%; height: 100%; border: 1px solid #334155; border-radius: 10px; background: #090A0F; transition: width 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); }',
-    '    .hub-container { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: #0F172A; border: 1px solid #7C3AED; padding: 12px 18px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px; width: 780px; max-width: 96vw; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }',
-    '    .hub-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }',
-    '    .hub-buttons button { background: #7C3AED; color: white; border: none; padding: 8px 6px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }',
-    '    .hub-buttons button:hover { background: #6D28D9; }',
-    '    #status-toast { font-size: 11px; color: #34D399; text-align: center; font-family: monospace; }',
     '  </style>',
     '</head>',
     '<body>',
     '  <header>',
-    `    <div class="brand">⚡ StealThisStack v5.7 <span class="meta">| Sections: ${pickedData.pageSectionsSummary.length} | Keyframes: ${pickedData.keyframes.length} | Media: ${pickedData.visibleMediaAssets.length}</span></div>`,
+    `    <div class="brand">⚡ StealThisStack <span class="meta">| Target: ${pickedData.url}</span></div>`,
     '    <div class="viewport-controls">',
     '      <button onclick="setStage(\'375px\')">📱 375px</button>',
     '      <button onclick="setStage(\'768px\')">💻 768px</button>',
@@ -804,31 +800,13 @@ export async function interactivePickElement(url, outputDir) {
     '  <main>',
     '    <iframe id="stage-frame" src="./isolated-stage.html"></iframe>',
     '  </main>',
-    '  <div class="hub-container">',
-    '    <div class="hub-buttons">',
-    '      <button onclick="copyPrompt(\'claude\')">📋 Copy Claude Prompt</button>',
-    '      <button onclick="copyPrompt(\'cursor\')">📋 Copy Cursor Prompt</button>',
-    '      <button onclick="copyPrompt(\'antigravity\')">📋 Copy Antigravity</button>',
-    '      <button onclick="copyPrompt(\'gemini\')">📋 Copy Gemini</button>',
-    '    </div>',
-    `    <div id="status-toast">✔ Ready! Captured ${pickedData.pageSectionsSummary.length} Page Sections, ${pickedData.visibleMediaAssets.length} Assets & ${pickedData.keyframes.length} Animations</div>`,
-    '  </div>',
-    `  <textarea id="ai-prompt-claude" style="display:none;">${escapeHtml(masterAiPrompt)}</textarea>`,
-    `  <textarea id="ai-prompt-cursor" style="display:none;">${escapeHtml('@web ' + masterAiPrompt)}</textarea>`,
-    `  <textarea id="ai-prompt-antigravity" style="display:none;">${escapeHtml('# Antigravity Protocol\n' + masterAiPrompt)}</textarea>`,
-    `  <textarea id="ai-prompt-gemini" style="display:none;">${escapeHtml(masterAiPrompt)}</textarea>`,
     '  <script>',
     '    function setStage(w) { document.getElementById("stage-frame").style.width = w; }',
-    '    function copyPrompt(m) {',
-    '      const ta = document.getElementById("ai-prompt-" + m);',
-    '      if (!ta) return;',
-    '      navigator.clipboard.writeText(ta.value);',
-    '      document.getElementById("status-toast").innerText = "✔ Copied " + m.toUpperCase() + " Prompt to Clipboard!";',
-    '    }',
     '  </script>',
     '</body>',
     '</html>'
   ].join('\n');
+
 
   await fs.writeFile(studioFilePath, studioHtml, 'utf-8');
   exec(process.platform === 'win32' ? `start "" "${studioFilePath}"` : `open "${studioFilePath}"`);
