@@ -46,7 +46,7 @@ export async function extractDesignSystem(url) {
               }
             }
           }
-        } catch (e) { }
+        } catch (e) {}
       }
 
       const bgCounts = new Map();
@@ -139,7 +139,7 @@ export async function extractDesignSystem(url) {
 }
 
 /**
- * Mode 2: High-Accuracy Visual Component & Full-Page Compiler Studio (--pick)
+ * Mode 2: 9.5/10 High-Precision UI Replication Studio (--pick)
  */
 export async function interactivePickElement(url, outputDir) {
   await fs.mkdir(outputDir, { recursive: true });
@@ -182,7 +182,7 @@ export async function interactivePickElement(url, outputDir) {
               source: source.slice(0, 3000)
             });
           }
-        } catch (e) { }
+        } catch (e) {}
         return orig.apply(this, arguments);
       };
     };
@@ -207,7 +207,7 @@ export async function interactivePickElement(url, outputDir) {
           if (txt && capturedAssets.externalCssTexts.length < 30) {
             capturedAssets.externalCssTexts.push(txt);
           }
-        } catch (e) { }
+        } catch (e) {}
       }
 
       if (['.glb', '.gltf', '.hdr', '.exr', '.obj', '.riv', '.splinecode'].some((ext) => cleanPath.endsWith(ext))) {
@@ -223,7 +223,7 @@ export async function interactivePickElement(url, outputDir) {
         await fs.writeFile(path.join(assetsDir, fileName), buf);
         capturedAssets.fonts.push({ fileName, originalUrl: reqUrl, localPath: './assets/' + fileName });
       }
-    } catch (e) { }
+    } catch (e) {}
   });
 
   try {
@@ -257,7 +257,7 @@ export async function interactivePickElement(url, outputDir) {
     badgeText.innerText = '⚡ Hover UI & Click | Press ↑/↓ to adjust parent/child';
 
     const fullPageBtn = document.createElement('button');
-    fullPageBtn.innerText = '🌐 Steal Entire Webpage (Full-Depth 9.5/10)';
+    fullPageBtn.innerText = '🌐 Steal Entire Webpage (9.5/10 Fidelity)';
     fullPageBtn.style.cssText =
       'background:linear-gradient(135deg,#7C3AED,#EC4899);color:white;border:none;padding:6px 14px;border-radius:9999px;font-weight:700;font-size:12px;cursor:pointer;';
 
@@ -346,7 +346,7 @@ export async function interactivePickElement(url, outputDir) {
 
   const selectionInfo = await pickPromise;
 
-  // Multi-Layer Hardware Wheel + Container Scroll Hydration (Defeats Lenis/Next.js Virtualization)
+  // Multi-Layer Hardware Wheel + Container Scroll Hydration
   if (selectionInfo.isFullPage) {
     console.log('🔄 Hydrating full page (Hardware Wheel + Inner Scroll Containers + Section Reveal)...');
     await page.mouse.move(720, 450);
@@ -355,22 +355,19 @@ export async function interactivePickElement(url, outputDir) {
       await page.mouse.wheel(0, 750);
       await page.evaluate((idx) => {
         window.scrollBy(0, 750);
-        // Also scroll any custom smooth-scroll wrapper (Lenis, Locomotive, inner <main> overflow)
         document.querySelectorAll('main, [data-scroll-container], [class*="scroll"], div').forEach((el) => {
           if (el.scrollHeight > el.clientHeight + 200) {
             el.scrollTop += 750;
           }
         });
-        // Force scrollIntoView on top-level sections so IntersectionObservers fire
         const sections = document.querySelectorAll('section, footer, main > div, body > div > div');
         if (sections[idx]) {
-          try { sections[idx].scrollIntoView({ behavior: 'instant', block: 'center' }); } catch (e) { }
+          try { sections[idx].scrollIntoView({ behavior: 'instant', block: 'center' }); } catch (e) {}
         }
       }, step);
       await page.waitForTimeout(180);
     }
 
-    // Scroll back to top and wait for final paints
     await page.evaluate(() => {
       window.scrollTo(0, 0);
       document.querySelectorAll('main, [data-scroll-container], div').forEach((el) => {
@@ -389,7 +386,7 @@ export async function interactivePickElement(url, outputDir) {
     } else {
       await page.screenshot({ path: referenceCropPath, fullPage: true });
     }
-  } catch (e) { }
+  } catch (e) {}
 
   const pickedData = await page.evaluate(
     ({ isFullPage, externalCssList }) => {
@@ -405,7 +402,7 @@ export async function interactivePickElement(url, outputDir) {
           const filename = `canvas-export-${idx + 1}.jpg`;
           canvasExports.push({ filename, dataUrl });
           canvas.setAttribute('data-stealth-canvas-export', filename);
-        } catch (err) { }
+        } catch (err) {}
       });
 
       const toAbs = (relUrl) => {
@@ -417,7 +414,6 @@ export async function interactivePickElement(url, outputDir) {
         }
       };
 
-      // Force lazy-loaded images/videos to resolve their real URLs
       document.querySelectorAll('img, video, audio, source, iframe, a').forEach((node) => {
         const dataSrc = node.getAttribute('data-src') || node.getAttribute('data-lazy-src');
         if (dataSrc && !node.getAttribute('src')) node.setAttribute('src', toAbs(dataSrc));
@@ -430,7 +426,6 @@ export async function interactivePickElement(url, outputDir) {
         node.removeAttribute('srcset');
       });
 
-      // Deduplicated Media Asset Manifest (Captures <img src>, <video src>, <video><source src>, and CSS bg-images)
       const mediaSeen = new Set();
       const visibleMediaAssets = [];
       target.querySelectorAll('img, video, picture source').forEach((el) => {
@@ -454,7 +449,6 @@ export async function interactivePickElement(url, outputDir) {
         }
       });
 
-      // Clean Root Design Tokens (Filters out noisy video-player & internal Tailwind empty vars)
       const resolvedVars = {};
       const NOISY_VAR_PREFIXES = ['--tw-', '--media-', '--cue-', '--chapter-', '--item-', '--checkbox-', '--track-', '--thumb-', '--scrollbar-', '--webkit-scrollbar-', '--vp-', '--anchor-', '--default-'];
       for (const sheet of Array.from(document.styleSheets)) {
@@ -471,7 +465,7 @@ export async function interactivePickElement(url, outputDir) {
               }
             }
           }
-        } catch (e) { }
+        } catch (e) {}
       }
 
       const keyframesMap = new Map();
@@ -491,7 +485,7 @@ export async function interactivePickElement(url, outputDir) {
               fluidRules.add(text);
             }
           }
-        } catch (e) { }
+        } catch (e) {}
       }
 
       for (const raw of externalCssList || []) {
@@ -509,7 +503,6 @@ export async function interactivePickElement(url, outputDir) {
       const cssVarsDump = `:root {\n  ${cssVarsArray.join('\n  ')}\n}`;
       cssomRules.unshift(cssVarsDump);
 
-      // Section-Aware Full-Depth DOM Serializer
       const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'META', 'LINK', 'TEMPLATE', 'IFRAME', 'FONT']);
       let nodeCount = 0;
       const MAX_TOTAL_NODES = isFullPage ? 6500 : 1800;
@@ -518,6 +511,7 @@ export async function interactivePickElement(url, outputDir) {
         if (!el || nodeCount > MAX_TOTAL_NODES || depth > 28) return '';
         if (el.nodeType === Node.TEXT_NODE) {
           const text = el.textContent.replace(/\s+/g, ' ').trim();
+          if (text.includes('mmMwWLliI0fiflO') || /^(word\s+){5,}/i.test(text)) return '';
           return text ? '  '.repeat(depth) + text : '';
         }
         if (el.nodeType !== Node.ELEMENT_NODE) return '';
@@ -527,15 +521,11 @@ export async function interactivePickElement(url, outputDir) {
         const r = el.getBoundingClientRect();
         const cs = window.getComputedStyle(el);
 
-        // Skip screen-reader-only skip links ("Skip to main content")
         if (tag === 'a' && (el.innerText || '').toLowerCase().includes('skip to')) return '';
-
-        // Only skip display:none if it is NOT a structural section or navigation menu
         if (cs.display === 'none' && !['SECTION', 'FOOTER', 'MAIN', 'ARTICLE', 'NAV'].includes(el.tagName)) {
           return '';
         }
 
-        // Retain full SVG markup for icons up to 80px
         if (tag === 'svg') {
           nodeCount++;
           if (r.width <= 80 && r.height <= 80 && el.innerHTML.length < 1800) {
@@ -544,7 +534,6 @@ export async function interactivePickElement(url, outputDir) {
           return '  '.repeat(depth) + `<svg width="${Math.round(r.width || 24)}" height="${Math.round(r.height || 24)}" viewBox="${el.getAttribute('viewBox') || '0 0 24 24'}"></svg>`;
         }
 
-        // Preserve semantic attributes (href, id, aria-label, role)
         let semanticAttrs = '';
         if (el.id && !el.id.startsWith('radix-') && !el.id.startsWith('headlessui-')) {
           semanticAttrs += ` id="${el.id}"`;
@@ -578,7 +567,12 @@ export async function interactivePickElement(url, outputDir) {
             val !== 'static' &&
             !val.startsWith('0px none')
           ) {
-            // Clean sub-pixel grid column noise into clean fractions
+            if (prop === 'margin') {
+              const mMatch = val.match(/^([\d.]+px)\s+([\d.]+)px\s+([\d.]+px)\s+([\d.]+)px$/);
+              if (mMatch && parseFloat(mMatch[2]) > 180) {
+                val = `${mMatch[1]} auto ${mMatch[3]} auto`;
+              }
+            }
             if (prop === 'grid-template-columns' && val.includes('px')) {
               const colCount = val.trim().split(/\s+/).length;
               if (colCount > 1) val = `repeat(${colCount}, minmax(0, 1fr))`;
@@ -587,7 +581,6 @@ export async function interactivePickElement(url, outputDir) {
           }
         });
 
-        // Clean Transitions (Strip verbose 6-property Tailwind transition lists down to concise form)
         const trans = cs.getPropertyValue('transition');
         if (trans && trans !== 'all 0s ease 0s' && trans !== 'none 0s ease 0s' && !trans.startsWith('all 0s')) {
           if (trans.includes('color') && trans.includes('background-color') && trans.includes('fill')) {
@@ -629,7 +622,6 @@ export async function interactivePickElement(url, outputDir) {
           .map((c) => serializeNode(c, cs, depth + 1))
           .filter(Boolean);
 
-        // Prune completely empty, unstyled decorative wrapper divs that have no children, background, or media
         if (childrenList.length === 0 && !['video', 'canvas', 'input', 'textarea', 'hr'].includes(tag) && !bg) {
           return '';
         }
@@ -638,11 +630,9 @@ export async function interactivePickElement(url, outputDir) {
         return '  '.repeat(depth) + `<${tag}${attrs}>\n${childrenList.join('\n')}\n` + '  '.repeat(depth) + `</${tag}>`;
       };
 
-      // Deduplicate any scroll-cloned footers
       const footers = Array.from(document.querySelectorAll('footer'));
       if (footers.length > 1) footers.slice(1).forEach((f) => f.remove());
 
-      // Extract Major Page Sections Map so AI knows every section on the page
       const pageSectionsSummary = Array.from(target.querySelectorAll('header, main > *, section, footer'))
         .map((sec, idx) => {
           const h = sec.querySelector('h1, h2, h3');
@@ -723,7 +713,7 @@ export async function interactivePickElement(url, outputDir) {
     : '  /* Fallback to computed styles inside DOM nodes */';
 
   const masterAiPrompt = [
-    '# STEALTHISSTACK v5.7 1:1 REPLICATION BLUEPRINT',
+    '# STEALTHISSTACK v5.8 1:1 REPLICATION BLUEPRINT',
     `Target URL: ${pickedData.url}`,
     `Scope: ${pickedData.isFullPage ? 'FULL WEBPAGE' : 'COMPONENT'}`,
     '',
@@ -765,15 +755,14 @@ export async function interactivePickElement(url, outputDir) {
   const escapeHtml = (str) =>
     str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-  // 3. Write Studio Wrapper with Viewport Controls & Prompt Hub
-  // 3. Write Studio Wrapper with Viewport Controls & Prompt Hub
+  // 3. Write Studio Wrapper with Viewport Controls & Multi-AI Prompt Copy Hub
   const studioFilePath = path.join(outputDir, 'picked-component.html');
   const studioHtml = [
     '<!DOCTYPE html>',
     '<html lang="en">',
     '<head>',
     '  <meta charset="UTF-8" />',
-    `  <title>StealThisStack Studio — ${pickedData.tagName}</title>`,
+    `  <title>StealThisStack v5.8 Studio — ${pickedData.tagName}</title>`,
     '  <style>',
     '    * { box-sizing: border-box; }',
     '    body { margin: 0; height: 100vh; display: flex; flex-direction: column; background: #090D16; color: #F8FAFC; font-family: system-ui, sans-serif; overflow: hidden; }',
@@ -783,13 +772,18 @@ export async function interactivePickElement(url, outputDir) {
     '    .viewport-controls { display: flex; gap: 6px; align-items: center; }',
     '    .viewport-controls button, .viewport-controls a { background: #1E293B; color: #E2E8F0; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; text-decoration: none; }',
     '    .viewport-controls button:hover, .viewport-controls a:hover { border-color: #A855F7; color: white; }',
-    '    main { flex: 1; display: flex; justify-content: center; align-items: stretch; padding: 12px; overflow: hidden; }',
+    '    main { flex: 1; display: flex; justify-content: center; align-items: stretch; padding: 12px 12px 105px 12px; overflow: hidden; }',
     '    #stage-frame { width: 100%; height: 100%; border: 1px solid #334155; border-radius: 10px; background: #090A0F; transition: width 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); }',
+    '    .hub-container { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #0F172A; border: 1px solid #7C3AED; padding: 10px 16px; border-radius: 14px; display: flex; flex-direction: column; gap: 6px; width: 720px; max-width: 95vw; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }',
+    '    .hub-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }',
+    '    .hub-buttons button { background: #7C3AED; color: white; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }',
+    '    .hub-buttons button:hover { background: #6D28D9; }',
+    '    #status-toast { font-size: 11px; color: #34D399; text-align: center; font-family: monospace; }',
     '  </style>',
     '</head>',
     '<body>',
     '  <header>',
-    `    <div class="brand">⚡ StealThisStack <span class="meta">| Target: ${pickedData.url}</span></div>`,
+    `    <div class="brand">⚡ StealThisStack v5.8 <span class="meta">| Sections: ${pickedData.pageSectionsSummary.length} | Assets: ${pickedData.visibleMediaAssets.length}</span></div>`,
     '    <div class="viewport-controls">',
     '      <button onclick="setStage(\'375px\')">📱 375px</button>',
     '      <button onclick="setStage(\'768px\')">💻 768px</button>',
@@ -800,16 +794,34 @@ export async function interactivePickElement(url, outputDir) {
     '  <main>',
     '    <iframe id="stage-frame" src="./isolated-stage.html"></iframe>',
     '  </main>',
+    '  <div class="hub-container">',
+    '    <div class="hub-buttons">',
+    '      <button onclick="copyPrompt(\'claude\')">📋 Copy Claude</button>',
+    '      <button onclick="copyPrompt(\'cursor\')">📋 Copy Cursor</button>',
+    '      <button onclick="copyPrompt(\'antigravity\')">📋 Copy Antigravity</button>',
+    '      <button onclick="copyPrompt(\'gemini\')">📋 Copy Gemini</button>',
+    '    </div>',
+    `    <div id="status-toast">✔ 9.5/10 Replication Prompt Ready (${pickedData.pageSectionsSummary.length} sections captured)</div>`,
+    '  </div>',
+    `  <textarea id="ai-prompt-claude" style="display:none;">${escapeHtml(masterAiPrompt)}</textarea>`,
+    `  <textarea id="ai-prompt-cursor" style="display:none;">@web ${escapeHtml(masterAiPrompt)}</textarea>`,
+    `  <textarea id="ai-prompt-antigravity" style="display:none;"># Antigravity Protocol\n${escapeHtml(masterAiPrompt)}</textarea>`,
+    `  <textarea id="ai-prompt-gemini" style="display:none;">${escapeHtml(masterAiPrompt)}</textarea>`,
     '  <script>',
     '    function setStage(w) { document.getElementById("stage-frame").style.width = w; }',
+    '    function copyPrompt(m) {',
+    '      const ta = document.getElementById("ai-prompt-" + m);',
+    '      if (!ta) return;',
+    '      navigator.clipboard.writeText(ta.value);',
+    '      document.getElementById("status-toast").innerText = "✔ Copied " + m.toUpperCase() + " 9.5/10 Prompt to Clipboard!";',
+    '    }',
     '  </script>',
     '</body>',
     '</html>'
   ].join('\n');
 
-
   await fs.writeFile(studioFilePath, studioHtml, 'utf-8');
   exec(process.platform === 'win32' ? `start "" "${studioFilePath}"` : `open "${studioFilePath}"`);
-  console.log(`\n✔ Full Studio v5.7 launched at: ${studioFilePath}`);
+  console.log(`\n✔ Full Studio v5.8 launched at: ${studioFilePath}`);
   return { studioFilePath, stageFilePath, pickedData };
 }
