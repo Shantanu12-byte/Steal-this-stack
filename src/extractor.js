@@ -4,11 +4,10 @@ import fs from 'fs/promises';
 import path from 'path';
 import { exec } from 'child_process';
 
-// Apply the stealth plugin to avoid being blocked by Cloudflare/Bot management
 chromium.use(stealth());
 
 /**
- * Mode 1: Full-Page Design System Token Extractor (Used by generator.js & mcp-server.js)
+ * Mode 1: Design System Token Extractor (Used by generator.js & mcp-server.js)
  */
 export async function extractDesignSystem(url) {
   const browser = await chromium.launch({ headless: true });
@@ -41,7 +40,7 @@ export async function extractDesignSystem(url) {
             if (rule.style) {
               for (let i = 0; i < rule.style.length; i++) {
                 const prop = rule.style[i];
-                if (prop.startsWith('--')) {
+                if (prop.startsWith('--') && !prop.startsWith('--tw-') && !prop.startsWith('--media-') && !prop.startsWith('--cue-')) {
                   cssVariables[prop] = rule.style.getPropertyValue(prop).trim();
                 }
               }
@@ -59,7 +58,7 @@ export async function extractDesignSystem(url) {
       const transitions = new Set();
       const scale = {};
 
-      for (const el of Array.from(document.querySelectorAll('*')).slice(0, 900)) {
+      for (const el of Array.from(document.querySelectorAll('*')).slice(0, 1500)) {
         const r = el.getBoundingClientRect();
         if (r.width === 0 || r.height === 0) continue;
         const cs = window.getComputedStyle(el);
@@ -100,7 +99,7 @@ export async function extractDesignSystem(url) {
           const r = s.getBoundingClientRect();
           return r.width > 8 && r.width < 120 && r.height > 8 && r.height < 120;
         })
-        .slice(0, 12)
+        .slice(0, 15)
         .map((s, idx) => ({
           id: s.id || `icon-${idx + 1}`,
           html: s.outerHTML
@@ -140,7 +139,7 @@ export async function extractDesignSystem(url) {
 }
 
 /**
- * Mode 2: Interactive Visual Component & Full-Page Compiler Studio (--pick)
+ * Mode 2: High-Accuracy Visual Component & Full-Page Compiler Studio (--pick)
  */
 export async function interactivePickElement(url, outputDir) {
   await fs.mkdir(outputDir, { recursive: true });
@@ -155,7 +154,7 @@ export async function interactivePickElement(url, outputDir) {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-infobars',
-      '--disable-features=Translate', // Kill Google Translate (<font> pollution)
+      '--disable-features=Translate',
       '--window-size=1440,900'
     ]
   });
@@ -170,7 +169,6 @@ export async function interactivePickElement(url, outputDir) {
 
   const page = await context.newPage();
 
-  // Pre-boot WebGL Shader Hook
   await page.addInitScript(() => {
     window.__STEAL_SHADERS__ = [];
     const hookWebGL = (proto) => {
@@ -194,7 +192,6 @@ export async function interactivePickElement(url, outputDir) {
 
   const capturedAssets = { fonts: [], models3d: [], externalCssTexts: [] };
 
-  // Network Interceptor
   page.on('response', async (response) => {
     try {
       const reqUrl = response.url();
@@ -207,7 +204,7 @@ export async function interactivePickElement(url, outputDir) {
       if (cleanPath.endsWith('.css') || contentType.includes('text/css')) {
         try {
           const txt = await response.text();
-          if (txt && capturedAssets.externalCssTexts.length < 15) {
+          if (txt && capturedAssets.externalCssTexts.length < 30) {
             capturedAssets.externalCssTexts.push(txt);
           }
         } catch (e) { }
@@ -220,7 +217,7 @@ export async function interactivePickElement(url, outputDir) {
         capturedAssets.models3d.push({ fileName, originalUrl: reqUrl, localPath: './assets/3d/' + fileName });
       }
 
-      if (cleanPath.endsWith('.woff2') && capturedAssets.fonts.length < 8) {
+      if (cleanPath.endsWith('.woff2') && capturedAssets.fonts.length < 12) {
         const fileName = path.basename(cleanPath);
         const buf = await response.body();
         await fs.writeFile(path.join(assetsDir, fileName), buf);
@@ -230,14 +227,14 @@ export async function interactivePickElement(url, outputDir) {
   });
 
   try {
-    console.log('🌐 Navigating to ' + url + '... (Waiting for JS to mount & hydrate)');
+    console.log('🌐 Navigating to ' + url + '...');
     await page.goto(url, { waitUntil: 'load', timeout: 60000 });
     await page.waitForTimeout(3000);
   } catch (err) {
-    console.log('⚠️ Navigation warning: ' + err.message);
+    console.log('⚠️ Navigation note: ' + err.message);
     if (page.isClosed()) {
-      await browser.close().catch(() => {});
-      throw new Error('Browser closed before an element was selected.');
+      await browser.close();
+      return;
     }
   }
 
@@ -245,7 +242,6 @@ export async function interactivePickElement(url, outputDir) {
   const pickPromise = new Promise((resolve) => { resolvePick = resolve; });
   await page.exposeFunction('__onStealElementPicked', (payload) => { resolvePick(payload); });
 
-  // Inject Visual Picker Interface
   await page.evaluate(() => {
     const overlay = document.createElement('div');
     overlay.style.cssText =
@@ -261,9 +257,9 @@ export async function interactivePickElement(url, outputDir) {
     badgeText.innerText = '⚡ Hover UI & Click | Press ↑/↓ to adjust parent/child';
 
     const fullPageBtn = document.createElement('button');
-    fullPageBtn.innerText = '🌐 Steal Entire Webpage (Full Studio)';
+    fullPageBtn.innerText = '🌐 Steal Entire Webpage (Full-Depth 9.5/10)';
     fullPageBtn.style.cssText =
-      'background:linear-gradient(135deg,#7C3AED,#EC4899);color:white;border:none;padding:6px 14px;border-radius:9999px;font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 4px 12px rgba(124,58,237,0.4);';
+      'background:linear-gradient(135deg,#7C3AED,#EC4899);color:white;border:none;padding:6px 14px;border-radius:9999px;font-weight:700;font-size:12px;cursor:pointer;';
 
     topBar.appendChild(badgeText);
     topBar.appendChild(fullPageBtn);
@@ -288,8 +284,7 @@ export async function interactivePickElement(url, outputDir) {
       overlay.style.left = r.left + 'px';
       overlay.style.width = r.width + 'px';
       overlay.style.height = r.height + 'px';
-      const animCount = typeof el.getAnimations === 'function' ? el.getAnimations({ subtree: true }).length : 0;
-      badgeText.innerText = `⚡ <${el.tagName.toLowerCase()}> (${Math.round(r.width)}×${Math.round(r.height)}px) | 🎬 ${animCount} Anims | ↑/↓ Resize`;
+      badgeText.innerText = `⚡ <${el.tagName.toLowerCase()}> (${Math.round(r.width)}×${Math.round(r.height)}px) | ↑/↓ Resize`;
     };
 
     window.addEventListener(
@@ -326,20 +321,10 @@ export async function interactivePickElement(url, outputDir) {
 
     fullPageBtn.addEventListener(
       'click',
-      async (e) => {
+      (e) => {
         e.preventDefault();
         e.stopPropagation();
-        fullPageBtn.innerText = '⏳ Deep Hydrating DOM...';
-
-        // Single controlled pass to trigger lazy loads without recursive scroll duplication
-        await new Promise((resolve) => {
-          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-          setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: 'instant' });
-            setTimeout(resolve, 800);
-          }, 1200);
-        });
-
+        fullPageBtn.innerText = '⏳ Unlocking Scroll Containers & Hydrating Sections...';
         finalizeSelection(document.body, true);
       },
       true
@@ -361,7 +346,40 @@ export async function interactivePickElement(url, outputDir) {
 
   const selectionInfo = await pickPromise;
 
-  // Safe High-DPI Reference Screenshot
+  // Multi-Layer Hardware Wheel + Container Scroll Hydration (Defeats Lenis/Next.js Virtualization)
+  if (selectionInfo.isFullPage) {
+    console.log('🔄 Hydrating full page (Hardware Wheel + Inner Scroll Containers + Section Reveal)...');
+    await page.mouse.move(720, 450);
+
+    for (let step = 0; step < 18; step++) {
+      await page.mouse.wheel(0, 750);
+      await page.evaluate((idx) => {
+        window.scrollBy(0, 750);
+        // Also scroll any custom smooth-scroll wrapper (Lenis, Locomotive, inner <main> overflow)
+        document.querySelectorAll('main, [data-scroll-container], [class*="scroll"], div').forEach((el) => {
+          if (el.scrollHeight > el.clientHeight + 200) {
+            el.scrollTop += 750;
+          }
+        });
+        // Force scrollIntoView on top-level sections so IntersectionObservers fire
+        const sections = document.querySelectorAll('section, footer, main > div, body > div > div');
+        if (sections[idx]) {
+          try { sections[idx].scrollIntoView({ behavior: 'instant', block: 'center' }); } catch (e) { }
+        }
+      }, step);
+      await page.waitForTimeout(180);
+    }
+
+    // Scroll back to top and wait for final paints
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+      document.querySelectorAll('main, [data-scroll-container], div').forEach((el) => {
+        if (el.scrollTop > 0) el.scrollTop = 0;
+      });
+    });
+    await page.waitForTimeout(600);
+  }
+
   const referenceCropPath = path.join(outputDir, 'reference-crop.png');
   try {
     const pickedLocator = page.locator('[data-steal-picked="true"]').first();
@@ -371,18 +389,13 @@ export async function interactivePickElement(url, outputDir) {
     } else {
       await page.screenshot({ path: referenceCropPath, fullPage: true });
     }
-    console.log('📸 Reference visual crop saved to reference-crop.png');
-  } catch (e) {
-    console.log('⚠️ Could not take reference crop:', e.message);
-  }
+  } catch (e) { }
 
-  // Complete Extraction Payload
   const pickedData = await page.evaluate(
     ({ isFullPage, externalCssList }) => {
       const target = document.querySelector('[data-steal-picked="true"]') || document.body;
       const targetRect = target.getBoundingClientRect();
 
-      // Memory-safe canvas capture
       const canvasExports = [];
       document.querySelectorAll('canvas').forEach((canvas, idx) => {
         try {
@@ -404,7 +417,10 @@ export async function interactivePickElement(url, outputDir) {
         }
       };
 
+      // Force lazy-loaded images/videos to resolve their real URLs
       document.querySelectorAll('img, video, audio, source, iframe, a').forEach((node) => {
+        const dataSrc = node.getAttribute('data-src') || node.getAttribute('data-lazy-src');
+        if (dataSrc && !node.getAttribute('src')) node.setAttribute('src', toAbs(dataSrc));
         if (node.src) node.setAttribute('src', toAbs(node.getAttribute('src')));
         if (node.currentSrc && (node.tagName === 'IMG' || node.tagName === 'VIDEO')) {
           node.setAttribute('src', toAbs(node.currentSrc));
@@ -414,25 +430,33 @@ export async function interactivePickElement(url, outputDir) {
         node.removeAttribute('srcset');
       });
 
-      // Extract explicit image & video assets
+      // Deduplicated Media Asset Manifest (Captures <img src>, <video src>, <video><source src>, and CSS bg-images)
+      const mediaSeen = new Set();
       const visibleMediaAssets = [];
-      target.querySelectorAll('img, video').forEach((el) => {
+      target.querySelectorAll('img, video, picture source').forEach((el) => {
         const r = el.getBoundingClientRect();
-        if (r.width > 12 && r.height > 12) {
-          const src = el.currentSrc || el.src;
-          if (src) {
+        let src = el.currentSrc || el.src || el.getAttribute('src');
+        if (!src && el.tagName === 'VIDEO') {
+          const sourceChild = el.querySelector('source');
+          if (sourceChild) src = sourceChild.src || sourceChild.getAttribute('src');
+        }
+        if (src) {
+          const absSrc = toAbs(src);
+          if (!mediaSeen.has(absSrc) && !absSrc.startsWith('data:')) {
+            mediaSeen.add(absSrc);
             visibleMediaAssets.push({
-              tag: el.tagName.toLowerCase(),
-              src: toAbs(src),
-              alt: el.alt || 'graphic',
-              dimensions: `${Math.round(r.width)}x${Math.round(r.height)}px`
+              tag: el.tagName.toLowerCase() === 'source' ? 'video/picture' : el.tagName.toLowerCase(),
+              src: absSrc,
+              alt: el.alt || el.getAttribute('aria-label') || '',
+              dimensions: r.width > 0 ? `${Math.round(r.width)}x${Math.round(r.height)}px` : 'responsive'
             });
           }
         }
       });
 
-      // Harvest CSS Variables across live sheets
+      // Clean Root Design Tokens (Filters out noisy video-player & internal Tailwind empty vars)
       const resolvedVars = {};
+      const NOISY_VAR_PREFIXES = ['--tw-', '--media-', '--cue-', '--chapter-', '--item-', '--checkbox-', '--track-', '--thumb-', '--scrollbar-', '--webkit-scrollbar-', '--vp-', '--anchor-', '--default-'];
       for (const sheet of Array.from(document.styleSheets)) {
         try {
           for (const rule of Array.from(sheet.cssRules || [])) {
@@ -440,7 +464,9 @@ export async function interactivePickElement(url, outputDir) {
               for (let i = 0; i < rule.style.length; i++) {
                 const prop = rule.style[i];
                 if (prop.startsWith('--') && !resolvedVars[prop]) {
-                  resolvedVars[prop] = rule.style.getPropertyValue(prop).trim();
+                  if (NOISY_VAR_PREFIXES.some((prefix) => prop.startsWith(prefix))) continue;
+                  const val = rule.style.getPropertyValue(prop).trim();
+                  if (val) resolvedVars[prop] = val;
                 }
               }
             }
@@ -448,7 +474,6 @@ export async function interactivePickElement(url, outputDir) {
         } catch (e) { }
       }
 
-      // Deduplicate CSS Keyframes & Fluid Rules
       const keyframesMap = new Map();
       const fluidRules = new Set();
       const cssomRules = [];
@@ -459,10 +484,10 @@ export async function interactivePickElement(url, outputDir) {
             const text = rule.cssText || '';
             if (!sheet.href) cssomRules.push(text);
 
-            if (rule.type === CSSRule.KEYFRAMES_RULE) {
+            if (rule.type === CSSRule.KEYFRAMES_RULE && !rule.name.startsWith('vds-')) {
               keyframesMap.set(rule.name, text);
             }
-            if (/(clamp|calc|min|max)\(/.test(text) && fluidRules.size < 20) {
+            if (/(clamp|grid-cols|space-y|aspect-)/.test(text) && !text.includes('env(safe-area') && fluidRules.size < 35) {
               fluidRules.add(text);
             }
           }
@@ -472,45 +497,64 @@ export async function interactivePickElement(url, outputDir) {
       for (const raw of externalCssList || []) {
         const matches = raw.matchAll(/@(?:-webkit-)?keyframes\s+([a-zA-Z0-9_-]+)\s*\{((?:[^{}]*\{[^{}]*\})*[^{}]*)\}/g);
         for (const m of matches) {
-          if (!keyframesMap.has(m[1])) {
+          if (!keyframesMap.has(m[1]) && !m[1].startsWith('vds-')) {
             keyframesMap.set(m[1], m[0]);
           }
         }
         const clampMatches = raw.match(/[^{}]+\{[^{}]*clamp\([^)]+\)[^{}]*\}/g) || [];
-        clampMatches.slice(0, 15).forEach((c) => fluidRules.add(c.trim()));
+        clampMatches.slice(0, 20).forEach((c) => fluidRules.add(c.trim()));
       }
 
       const cssVarsArray = Object.entries(resolvedVars).map(([k, v]) => `${k}: ${v};`);
       const cssVarsDump = `:root {\n  ${cssVarsArray.join('\n  ')}\n}`;
       cssomRules.unshift(cssVarsDump);
 
-      // Traversal for Complete Blueprint Tree
+      // Section-Aware Full-Depth DOM Serializer
       const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'META', 'LINK', 'TEMPLATE', 'IFRAME', 'FONT']);
       let nodeCount = 0;
+      const MAX_TOTAL_NODES = isFullPage ? 6500 : 1800;
 
       const serializeNode = (el, parentCs = null, depth = 0) => {
-        if (!el || nodeCount > 900 || depth > 15) return '';
+        if (!el || nodeCount > MAX_TOTAL_NODES || depth > 28) return '';
         if (el.nodeType === Node.TEXT_NODE) {
           const text = el.textContent.replace(/\s+/g, ' ').trim();
-          return text ? text : '';
+          return text ? '  '.repeat(depth) + text : '';
         }
         if (el.nodeType !== Node.ELEMENT_NODE) return '';
         if (SKIP_TAGS.has(el.tagName)) return '';
 
+        const tag = el.tagName.toLowerCase();
         const r = el.getBoundingClientRect();
         const cs = window.getComputedStyle(el);
 
-        // Skip invisible skip links, but allow structural containers through
-        if (cs.display === 'none' || cs.visibility === 'hidden') return '';
-        if (r.width === 0 && r.height === 0 && !['BODY', 'MAIN', 'HEADER', 'FOOTER', 'SECTION', 'DIV'].includes(el.tagName)) {
+        // Skip screen-reader-only skip links ("Skip to main content")
+        if (tag === 'a' && (el.innerText || '').toLowerCase().includes('skip to')) return '';
+
+        // Only skip display:none if it is NOT a structural section or navigation menu
+        if (cs.display === 'none' && !['SECTION', 'FOOTER', 'MAIN', 'ARTICLE', 'NAV'].includes(el.tagName)) {
           return '';
         }
 
-        nodeCount++;
-        const tag = el.tagName.toLowerCase();
-
+        // Retain full SVG markup for icons up to 80px
         if (tag === 'svg') {
-          return '  '.repeat(depth) + `<svg width="${Math.round(r.width)}" height="${Math.round(r.height)}"></svg>\n`;
+          nodeCount++;
+          if (r.width <= 80 && r.height <= 80 && el.innerHTML.length < 1800) {
+            return '  '.repeat(depth) + el.outerHTML.replace(/\s+/g, ' ').trim();
+          }
+          return '  '.repeat(depth) + `<svg width="${Math.round(r.width || 24)}" height="${Math.round(r.height || 24)}" viewBox="${el.getAttribute('viewBox') || '0 0 24 24'}"></svg>`;
+        }
+
+        // Preserve semantic attributes (href, id, aria-label, role)
+        let semanticAttrs = '';
+        if (el.id && !el.id.startsWith('radix-') && !el.id.startsWith('headlessui-')) {
+          semanticAttrs += ` id="${el.id}"`;
+        }
+        if (tag === 'a' && el.getAttribute('href')) {
+          semanticAttrs += ` href="${toAbs(el.getAttribute('href'))}"`;
+        }
+        if (tag === 'video') {
+          const vSrc = el.currentSrc || el.src || (el.querySelector('source') ? el.querySelector('source').src : '');
+          if (vSrc) semanticAttrs += ` src="${toAbs(vSrc)}" autoplay loop muted playsinline`;
         }
 
         const keyStyles = [];
@@ -518,11 +562,11 @@ export async function interactivePickElement(url, outputDir) {
         const layoutProps = [
           'padding', 'margin', 'gap', 'border-radius', 'display', 'flex-direction',
           'justify-content', 'align-items', 'grid-template-columns', 'position',
-          'top', 'left', 'bottom', 'right', 'transform', 'opacity', 'box-shadow', 'backdrop-filter'
+          'box-shadow', 'backdrop-filter', 'border'
         ];
 
         layoutProps.forEach((prop) => {
-          const val = cs.getPropertyValue(prop);
+          let val = cs.getPropertyValue(prop);
           if (
             val &&
             val !== '0px' &&
@@ -532,16 +576,28 @@ export async function interactivePickElement(url, outputDir) {
             val !== 'block' &&
             val !== 'row' &&
             val !== 'static' &&
-            !(prop === 'opacity' && val === '1')
+            !val.startsWith('0px none')
           ) {
+            // Clean sub-pixel grid column noise into clean fractions
+            if (prop === 'grid-template-columns' && val.includes('px')) {
+              const colCount = val.trim().split(/\s+/).length;
+              if (colCount > 1) val = `repeat(${colCount}, minmax(0, 1fr))`;
+            }
             keyStyles.push(`${prop}:${val}`);
           }
         });
 
+        // Clean Transitions (Strip verbose 6-property Tailwind transition lists down to concise form)
         const trans = cs.getPropertyValue('transition');
         if (trans && trans !== 'all 0s ease 0s' && trans !== 'none 0s ease 0s' && !trans.startsWith('all 0s')) {
-          keyStyles.push(`transition:${trans}`);
+          if (trans.includes('color') && trans.includes('background-color') && trans.includes('fill')) {
+            const durMatch = trans.match(/[\d.]+s\s+cubic-bezier\([^)]+\)/);
+            keyStyles.push(`transition:colors ${durMatch ? durMatch[0] : '0.3s ease'}`);
+          } else {
+            keyStyles.push(`transition:${trans}`);
+          }
         }
+
         const anim = cs.getPropertyValue('animation');
         const animName = cs.getPropertyValue('animation-name');
         if (animName && animName !== 'none') {
@@ -549,9 +605,12 @@ export async function interactivePickElement(url, outputDir) {
         }
 
         inheritableProps.forEach((prop) => {
-          const val = cs.getPropertyValue(prop);
+          let val = cs.getPropertyValue(prop);
           const parentVal = parentCs ? parentCs.getPropertyValue(prop) : null;
           if (val && val !== parentVal && val !== 'normal') {
+            if (prop === 'font-family') {
+              val = val.split(',')[0].replace(/['"]/g, '').trim();
+            }
             keyStyles.push(`${prop}:${val}`);
           }
         });
@@ -559,38 +618,44 @@ export async function interactivePickElement(url, outputDir) {
         const bg = cs.backgroundColor !== 'rgba(0, 0, 0, 0)' ? cs.backgroundColor : null;
         if (bg) keyStyles.push('bg:' + bg);
 
-        let attrs = keyStyles.length ? ` data-computed="${keyStyles.join('; ')}"` : '';
-        if (el.hasAttribute('data-stealth-canvas-export')) {
-          attrs += ` data-stealth-canvas-export="${el.getAttribute('data-stealth-canvas-export')}"`;
-        }
+        let attrs = semanticAttrs + (keyStyles.length ? ` data-computed="${keyStyles.join('; ')}"` : '');
 
         if (tag === 'img') {
-          return '  '.repeat(depth) + `<img src="${toAbs(el.src)}" alt="${el.alt || ''}" width="${Math.round(r.width)}" height="${Math.round(r.height)}"${attrs} />\n`;
+          nodeCount++;
+          return '  '.repeat(depth) + `<img src="${toAbs(el.currentSrc || el.src)}" alt="${el.alt || ''}" width="${Math.round(r.width)}" height="${Math.round(r.height)}"${attrs} />`;
         }
 
-        const childrenStr = Array.from(el.childNodes)
+        const childrenList = Array.from(el.childNodes)
           .map((c) => serializeNode(c, cs, depth + 1))
-          .filter(Boolean)
-          .join('\n');
+          .filter(Boolean);
 
-        return '  '.repeat(depth) + `<${tag}${attrs}>\n${childrenStr}\n` + '  '.repeat(depth) + `</${tag}>`;
+        // Prune completely empty, unstyled decorative wrapper divs that have no children, background, or media
+        if (childrenList.length === 0 && !['video', 'canvas', 'input', 'textarea', 'hr'].includes(tag) && !bg) {
+          return '';
+        }
+
+        nodeCount++;
+        return '  '.repeat(depth) + `<${tag}${attrs}>\n${childrenList.join('\n')}\n` + '  '.repeat(depth) + `</${tag}>`;
       };
 
-      // Clean duplicate appended footers and ribbons created by scroll events
+      // Deduplicate any scroll-cloned footers
       const footers = Array.from(document.querySelectorAll('footer'));
-      if (footers.length > 1) {
-        footers.slice(1).forEach((f) => f.remove());
-      }
-      const bottomBars = Array.from(document.querySelectorAll('.footer-ribbon, [class*="footer-line"]'));
-      if (bottomBars.length > 1) {
-        bottomBars.slice(1).forEach((b) => b.remove());
-      }
+      if (footers.length > 1) footers.slice(1).forEach((f) => f.remove());
+
+      // Extract Major Page Sections Map so AI knows every section on the page
+      const pageSectionsSummary = Array.from(target.querySelectorAll('header, main > *, section, footer'))
+        .map((sec, idx) => {
+          const h = sec.querySelector('h1, h2, h3');
+          const r = sec.getBoundingClientRect();
+          if (r.height < 20) return null;
+          return `${idx + 1}. <${sec.tagName.toLowerCase()}${sec.id ? '#' + sec.id : ''}> (${Math.round(r.width)}x${Math.round(r.height)}px) — Heading: "${h ? h.innerText.replace(/\s+/g, ' ').trim().slice(0, 70) : 'Visual/Content Block'}"`;
+        })
+        .filter(Boolean);
 
       const headLinksHtml = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
         .map((el) => el.outerHTML)
         .join('\n');
 
-      // Global SVG defs for masks and filters
       const globalSvgDefs = Array.from(document.querySelectorAll('svg defs'))
         .map((d) => `<svg style="width:0;height:0;position:absolute;overflow:hidden;" aria-hidden="true">${d.outerHTML}</svg>`)
         .join('\n');
@@ -605,10 +670,11 @@ export async function interactivePickElement(url, outputDir) {
         headLinksHtml,
         cssomDump: cssomRules.join('\n'),
         preservedBodyHtml: globalSvgDefs + '\n' + (isFullPage ? document.body.innerHTML : target.outerHTML),
-        visibleMediaAssets: visibleMediaAssets.slice(0, 30),
+        pageSectionsSummary,
+        visibleMediaAssets: visibleMediaAssets.slice(0, 60),
         resolvedVars,
-        keyframes: Array.from(keyframesMap.values()).slice(0, 15),
-        fluidRules: Array.from(fluidRules).slice(0, 15),
+        keyframes: Array.from(keyframesMap.values()).slice(0, 25),
+        fluidRules: Array.from(fluidRules).slice(0, 25),
         annotatedDomBlueprint: serializeNode(target, null, 0),
         webglShaders: window.__STEAL_SHADERS__ || [],
         canvasExports
@@ -620,7 +686,6 @@ export async function interactivePickElement(url, outputDir) {
   pickedData.capturedAssets = capturedAssets;
   await browser.close();
 
-  // Save exported canvas frames
   for (const canvasData of pickedData.canvasExports) {
     if (canvasData.dataUrl) {
       const base64Data = canvasData.dataUrl.replace(/^data:image\/jpeg;base64,/, '');
@@ -628,7 +693,6 @@ export async function interactivePickElement(url, outputDir) {
     }
   }
 
-  // 1. Write Isolated Cloned Site (Visual Sandbox with Strict CSS Scoping & Overflow Guards)
   const stageFilePath = path.join(outputDir, 'isolated-stage.html');
   const isolatedStageHtml = [
     '<!DOCTYPE html>',
@@ -639,25 +703,9 @@ export async function interactivePickElement(url, outputDir) {
     '  <base href="' + pickedData.url + '" />',
     pickedData.headLinksHtml,
     '  <style>',
-    '    /* Essential viewport & overflow guards */',
     '    *, *::before, *::after { box-sizing: border-box; }',
     '    html, body { width: 100%; max-width: 100%; overflow-x: hidden !important; margin: 0; padding: 0; background: #090A0F; }',
-    '    /* Contain ticker, marquee, and project card overflow runaway */',
-    '    .ticker-wrap, [class*="ticker"], [class*="marquee"] {',
-    '      overflow: hidden !important;',
-    '      width: 100% !important;',
-    '      max-width: 100vw !important;',
-    '      white-space: nowrap !important;',
-    '      display: flex !important;',
-    '    }',
-    '    .ticker-phrase {',
-    '      display: inline-block;',
-    '      white-space: nowrap;',
-    '    }',
-    '    .p-project-card {',
-    '      max-width: 100vw !important;',
-    '      box-sizing: border-box !important;',
-    '    }',
+    '    .ticker-wrap, [class*="ticker"], [class*="marquee"] { overflow: hidden !important; max-width: 100vw !important; }',
     pickedData.cssomDump,
     pickedData.keyframes.join('\n'),
     '  </style>',
@@ -669,28 +717,33 @@ export async function interactivePickElement(url, outputDir) {
   ].join('\n');
   await fs.writeFile(stageFilePath, isolatedStageHtml, 'utf-8');
 
-  // 2. Build Master AI Engineering Prompt
   const varEntries = Object.entries(pickedData.resolvedVars);
   const formattedVars = varEntries.length
     ? varEntries.map(([k, v]) => `  ${k}: ${v};`).join('\n')
     : '  /* Fallback to computed styles inside DOM nodes */';
 
   const masterAiPrompt = [
-    '# STEALTHISSTACK v5.4 FULL-FIDELITY BLUEPRINT',
+    '# STEALTHISSTACK v5.7 1:1 REPLICATION BLUEPRINT',
     `Target URL: ${pickedData.url}`,
     `Scope: ${pickedData.isFullPage ? 'FULL WEBPAGE' : 'COMPONENT'}`,
     '',
     '## EXECUTION RULES (DO NOT DEVIATE):',
-    '1. IMPLEMENT ALL ANIMATIONS: You MUST wire up every CSS `@keyframes` and `transition` listed in Section 3.',
-    '2. USE REAL ASSET URLS: Render every image and media asset listed in Section 2 with its exact absolute URL.',
-    '3. MATCH CSS VARIABLES: Reference the extracted root variables for brand colors, background tints, and gradients.',
+    '1. BUILD EVERY SECTION IN SECTION 0: Reconstruct the complete vertical page architecture from Header down to Footer. Never truncate or leave placeholder comments.',
+    '2. BIND REAL MEDIA URLS: Use the exact absolute `src` URLs from Section 2 for all `<video>`, `<img>`, and `<svg>` elements.',
+    '3. WIRE ALL KEYFRAMES & HOVER STATES: Implement every `@keyframes` rule in Section 3 and bind interactive hover/dropdown transitions.',
+    '4. APPLY CLEAN DESIGN TOKENS: Use the brand CSS variables in Section 1.',
     '',
-    '## 1. RESOLVED ROOT DESIGN TOKENS (CSS VARIABLES):',
+    '## 0. PAGE ARCHITECTURE MAP (REQUIRED SECTIONS TO RENDER):',
+    pickedData.pageSectionsSummary.length
+      ? pickedData.pageSectionsSummary.join('\n')
+      : '1. Full Component Hierarchy',
+    '',
+    '## 1. BRAND DESIGN TOKENS (CLEAN CSS VARIABLES):',
     '```css',
     ':root {\n' + formattedVars + '\n}',
     '```',
     '',
-    '## 2. EXTRACTED MEDIA ASSETS TO RENDER:',
+    '## 2. EXTRACTED MEDIA ASSETS TO RENDER (ABSOLUTE URLS):',
     JSON.stringify(pickedData.visibleMediaAssets, null, 2),
     '',
     '## 3. DEDUPLICATED CSS @KEYFRAMES & ANIMATIONS:',
@@ -698,14 +751,14 @@ export async function interactivePickElement(url, outputDir) {
     pickedData.keyframes.length ? pickedData.keyframes.join('\n\n') : '/* Transitions defined inline */',
     '```',
     '',
-    '## 4. FLUID CLAMP & RESPONSIVE RULES:',
+    '## 4. RESPONSIVE & GRID LAYOUT RULES:',
     '```css',
     pickedData.fluidRules.length ? pickedData.fluidRules.join('\n') : '/* Standard layout rules */',
     '```',
     '',
-    '## 5. COMPLETE STRUCTURAL BLUEPRINT (DEDUPLICATED DOM):',
+    '## 5. FULL DOM BLUEPRINT (NORMALIZED COMPUTED STYLES, HREFS, VIDEOS & INLINE SVGS):',
     '```html',
-    pickedData.annotatedDomBlueprint || pickedData.preservedBodyHtml.slice(0, 15000),
+    pickedData.annotatedDomBlueprint || pickedData.preservedBodyHtml,
     '```'
   ].join('\n');
 
@@ -719,7 +772,7 @@ export async function interactivePickElement(url, outputDir) {
     '<html lang="en">',
     '<head>',
     '  <meta charset="UTF-8" />',
-    `  <title>StealThisStack v5.4 Studio — ${pickedData.tagName}</title>`,
+    `  <title>StealThisStack v5.7 Studio — ${pickedData.tagName}</title>`,
     '  <style>',
     '    * { box-sizing: border-box; }',
     '    body { margin: 0; height: 100vh; display: flex; flex-direction: column; background: #090D16; color: #F8FAFC; font-family: system-ui, sans-serif; overflow: hidden; }',
@@ -740,7 +793,7 @@ export async function interactivePickElement(url, outputDir) {
     '</head>',
     '<body>',
     '  <header>',
-    `    <div class="brand">⚡ StealThisStack v5.4 <span class="meta">| Keyframes: ${pickedData.keyframes.length} | Media: ${pickedData.visibleMediaAssets.length} | Shaders: ${pickedData.webglShaders.length}</span></div>`,
+    `    <div class="brand">⚡ StealThisStack v5.7 <span class="meta">| Sections: ${pickedData.pageSectionsSummary.length} | Keyframes: ${pickedData.keyframes.length} | Media: ${pickedData.visibleMediaAssets.length}</span></div>`,
     '    <div class="viewport-controls">',
     '      <button onclick="setStage(\'375px\')">📱 375px</button>',
     '      <button onclick="setStage(\'768px\')">💻 768px</button>',
@@ -758,11 +811,11 @@ export async function interactivePickElement(url, outputDir) {
     '      <button onclick="copyPrompt(\'antigravity\')">📋 Copy Antigravity</button>',
     '      <button onclick="copyPrompt(\'gemini\')">📋 Copy Gemini</button>',
     '    </div>',
-    `    <div id="status-toast">✔ Ready! Captured ${pickedData.keyframes.length} Keyframes & ${pickedData.visibleMediaAssets.length} Visual Assets</div>`,
+    `    <div id="status-toast">✔ Ready! Captured ${pickedData.pageSectionsSummary.length} Page Sections, ${pickedData.visibleMediaAssets.length} Assets & ${pickedData.keyframes.length} Animations</div>`,
     '  </div>',
     `  <textarea id="ai-prompt-claude" style="display:none;">${escapeHtml(masterAiPrompt)}</textarea>`,
     `  <textarea id="ai-prompt-cursor" style="display:none;">${escapeHtml('@web ' + masterAiPrompt)}</textarea>`,
-    `  <textarea id="ai-prompt-antigravity" style="display:none;">${escapeHtml('# Antigravity v5.4 Protocol\n' + masterAiPrompt)}</textarea>`,
+    `  <textarea id="ai-prompt-antigravity" style="display:none;">${escapeHtml('# Antigravity Protocol\n' + masterAiPrompt)}</textarea>`,
     `  <textarea id="ai-prompt-gemini" style="display:none;">${escapeHtml(masterAiPrompt)}</textarea>`,
     '  <script>',
     '    function setStage(w) { document.getElementById("stage-frame").style.width = w; }',
@@ -779,6 +832,6 @@ export async function interactivePickElement(url, outputDir) {
 
   await fs.writeFile(studioFilePath, studioHtml, 'utf-8');
   exec(process.platform === 'win32' ? `start "" "${studioFilePath}"` : `open "${studioFilePath}"`);
-  console.log(`\n✔ Full Studio launched at: ${studioFilePath}`);
+  console.log(`\n✔ Full Studio v5.7 launched at: ${studioFilePath}`);
   return { studioFilePath, stageFilePath, pickedData };
 }
