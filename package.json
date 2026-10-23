@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./src/extractor.js",
   "bin": {
-    "steal-this-stack": "./bin/cli.js"
+    "steal-this-stack": "bin/cli.js"
   },
   "files": [
     "bin",
