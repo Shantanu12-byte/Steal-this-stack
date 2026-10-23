@@ -236,9 +236,8 @@ export async function interactivePickElement(url, outputDir) {
   } catch (err) {
     console.log('⚠️ Navigation warning: ' + err.message);
     if (page.isClosed()) {
-      console.error('✖ Browser closed before extraction could finish.');
-      await browser.close();
-      return;
+      await browser.close().catch(() => {});
+      throw new Error('Browser closed before an element was selected.');
     }
   }
 
