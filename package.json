@@ -1,0 +1,44 @@
+{
+  "name": "steal-this-stack",
+  "version": "1.0.0",
+  "description": "Reverse-engineer any live website's exact computed CSS variables, typography, animations, SVGs, and interactive UI components into a ready-to-code Tailwind starter or feed directly to AI coding agents via MCP.",
+  "type": "module",
+  "main": "./src/extractor.js",
+  "bin": {
+    "steal-this-stack": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node ./bin/cli.js",
+    "lint": "node -c ./src/extractor.js && node -c ./bin/cli.js",
+    "mcp": "node ./src/mcp-server.js"
+  },
+  "keywords": [
+    "design-system",
+    "reverse-engineering",
+    "tailwind",
+    "playwright",
+    "mcp",
+    "ai-agents",
+    "ui-cloner",
+    "css-extractor",
+    "cli"
+  ],
+  "author": "Open Source Contributor",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.1",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "ora": "^8.1.0",
+    "playwright": "^1.48.0",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "zod": "^3.23.8"
+  }
+}

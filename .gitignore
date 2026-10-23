@@ -1,0 +1,39 @@
+# Node dependencies
+node_modules/
+package-lock.json
+
+# Local test output folders
+stolen-stack/
+stolen-stack-*/
+my-picked-ui/
+dist/
+build/
+output/
+*-starter/
+
+# Generated test media & visual diffs
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.webm
+*.mp4
+
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs & temp files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.agents/
+.gemini/
